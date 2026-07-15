@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@1.97.0
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          add-rust-environment-hash-key: false
+          key: ${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml') }}
+
+      - name: Tests (default features)
+        run: cargo test
+
+      - name: Tests (all features)
+        run: cargo test --all-features
+
+      - name: Tests (core only)
+        run: cargo test --no-default-features
+
+      - name: Clippy
+        run: cargo clippy --all-features --all-targets -- -D warnings
+
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@1.97.0
+        with:
+          components: rustfmt
+      - run: cargo fmt --all -- --check

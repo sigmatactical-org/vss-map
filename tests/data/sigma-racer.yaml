@@ -1,0 +1,399 @@
+# Sigma Racer full-vehicle frame map (v0.2 draft) — XSR900 GP platform.
+#
+# Canonical DBC: schemas/can/sigma-racer.dbc. Supersedes m7-draft.dbc: the five
+# draft frames keep their IDs and layouts, re-homed to their true source nodes
+# (EFI, ABS, CLUSTER). M7 is the sidearm gateway on the iMX8MP Cortex-M7; it
+# receives everything it does not send, for logging and rpmsg bridging.
+# YAML mirror below for VSS mapping docs; keep in sync with the DBC.
+#
+# Published to sigma-updates as `sigma-racer.dbc` (the /v1/dbc/latest default)
+# for the can-viewer / sigma-racer-mechanic catalog. Rates follow the firmware
+# TX schedule (sigma-racer-efi comms::m7::TX_RATE_HZ), not the stale draft yaml.
+
+version: 0.2-draft
+bus: can0
+bitrate: 1000000
+fd: true
+
+frames:
+
+  - id: 0x0A0
+    name: ENGINE_STATUS
+    sender: EFI
+    dlc: 8
+    rate_hz: 50
+    description: Engine RPM, coolant, oil temperature, redline flag.
+    signals:
+      - name: EngineRPM
+        start: 0
+        length: 16
+        factor: 1
+        offset: 0
+        unit: rpm
+        vss: Vehicle.Powertrain.CombustionEngine.Speed
+      - name: CoolantTemp
+        start: 16
+        length: 8
+        factor: 1
+        offset: -40
+        unit: celsius
+        vss: Vehicle.OBD.CoolantTemperature
+      - name: OilTemp
+        start: 24
+        length: 8
+        factor: 1
+        offset: -40
+        unit: celsius
+        vss: Vehicle.OBD.OilTemperature
+      - name: Redline
+        start: 32
+        length: 1
+        vss: Vehicle.Powertrain.CombustionEngine.IsRedline
+
+  - id: 0x0C0
+    name: THROTTLE_GEAR
+    sender: EFI
+    dlc: 8
+    rate_hz: 50
+    description: Throttle plate + grip, gear, riding mode, side stand.
+    signals:
+      - name: ThrottlePos
+        start: 0
+        length: 10
+        factor: 0.1
+        offset: 0
+        unit: percent
+        vss: null  # not displayed on cluster v1
+      - name: CurrentGear
+        start: 16
+        length: 4
+        vss: Vehicle.Powertrain.Transmission.CurrentGear
+      - name: PerformanceMode
+        start: 20
+        length: 3
+        value_table:
+          0: RAIN
+          1: STD
+          2: SPORT
+          3: TRACK
+        vss: Vehicle.Powertrain.Transmission.PerformanceMode
+      - name: SideStand
+        start: 24
+        length: 1
+        vss: Vehicle.Body.IsSideStandEngaged
+      - name: ThrottleGrip
+        start: 32
+        length: 10
+        factor: 0.1
+        offset: 0
+        unit: percent
+        vss: null  # RbW rider demand; tuning/logging only
+
+  - id: 0x0D0
+    name: EFI_FUEL_IGNITION
+    sender: EFI
+    dlc: 8
+    rate_hz: 20
+    description: ECU combustion internals for datalogging and tuning.
+    signals:
+      - name: InjectorPulseWidth
+        start: 0
+        length: 16
+        factor: 0.001
+        offset: 0
+        unit: ms
+        vss: null
+      - name: IgnitionAdvance
+        start: 16
+        length: 10
+        factor: 0.1
+        offset: -20
+        unit: deg
+        vss: null
+      - name: Lambda
+        start: 26
+        length: 12
+        factor: 0.001
+        offset: 0.5
+        vss: null
+      - name: ManifoldPressure
+        start: 38
+        length: 10
+        factor: 0.25
+        offset: 0
+        unit: kPa
+        vss: Vehicle.OBD.MAP
+      - name: IntakeAirTemp
+        start: 48
+        length: 8
+        factor: 1
+        offset: -40
+        unit: celsius
+        vss: Vehicle.OBD.IntakeTemp
+      - name: RevLimitActive
+        start: 56
+        length: 1
+        vss: null
+      - name: EngineRunning
+        start: 57
+        length: 1
+        vss: Vehicle.Powertrain.CombustionEngine.IsRunning
+
+  - id: 0x0E0
+    name: RIDE_MODE_REQUEST
+    sender: CLUSTER
+    dlc: 2
+    rate_hz: 0  # event-driven (rider input)
+    description: Mode selection and trip reset requests from the cluster UI.
+    signals:
+      - name: RequestedMode
+        start: 0
+        length: 3
+        value_table:
+          0: RAIN
+          1: STD
+          2: SPORT
+          3: TRACK
+        vss: null
+      - name: TripResetRequest
+        start: 4
+        length: 2
+        value_table:
+          0: NONE
+          1: TRIP1
+          2: TRIP2
+          3: BOTH
+        vss: null
+
+  - id: 0x110
+    name: ABS_WHEEL_SPEEDS
+    sender: ABS
+    dlc: 8
+    rate_hz: 50
+    description: Per-wheel speeds from the ABS sensor rings, plus slip.
+    signals:
+      - name: FrontWheelSpeed
+        start: 0
+        length: 16
+        factor: 0.1
+        offset: 0
+        unit: km/h
+        vss: Vehicle.Chassis.Axle.Row1.Wheel.Speed
+      - name: RearWheelSpeed
+        start: 16
+        length: 16
+        factor: 0.1
+        offset: 0
+        unit: km/h
+        vss: Vehicle.Chassis.Axle.Row2.Wheel.Speed
+      - name: FrontWheelValid
+        start: 32
+        length: 1
+        vss: null
+      - name: RearWheelValid
+        start: 33
+        length: 1
+        vss: null
+      - name: WheelSlip
+        start: 40
+        length: 8
+        factor: 0.5
+        offset: -64
+        unit: percent
+        vss: null  # rear-vs-front; positive = rear overspeed (spin)
+
+  - id: 0x120
+    name: WHEEL_SPEED
+    sender: ABS
+    dlc: 8
+    rate_hz: 20
+    description: IMU-fused motion (name kept from m7-draft for compatibility).
+    signals:
+      - name: GroundSpeed
+        start: 0
+        length: 16
+        factor: 0.1
+        offset: 0
+        unit: km/h
+        vss: Vehicle.Speed
+      - name: LeanAngle
+        start: 16
+        length: 12
+        factor: 0.1
+        offset: -90
+        unit: deg
+        vss: Vehicle.Acceleration.Lateral
+      - name: LongAccel
+        start: 28
+        length: 12
+        factor: 0.01
+        offset: -20
+        unit: g
+        vss: Vehicle.Acceleration.Longitudinal
+
+  - id: 0x130
+    name: ABS_STATUS
+    sender: ABS
+    dlc: 8
+    rate_hz: 20
+    description: ABS/TC intervention state, brake pressures, faults.
+    signals:
+      - name: AbsActive
+        start: 0
+        length: 1
+        vss: Vehicle.ADAS.ABS.IsActive
+      - name: AbsInterventionFront
+        start: 1
+        length: 1
+        vss: null
+      - name: AbsInterventionRear
+        start: 2
+        length: 1
+        vss: null
+      - name: TcActive
+        start: 3
+        length: 1
+        vss: Vehicle.ADAS.TCS.IsActive
+      - name: WheelLiftDetected
+        start: 4
+        length: 1
+        vss: null  # wheelie/stoppie detection
+      - name: AbsFault
+        start: 5
+        length: 1
+        vss: Vehicle.ADAS.ABS.IsError
+      - name: TcMode
+        start: 8
+        length: 3
+        value_table:
+          0: "OFF"
+          1: LEVEL_1
+          2: LEVEL_2
+          3: MANUAL
+        vss: null
+      - name: AbsDtcCount
+        start: 16
+        length: 8
+        vss: null
+
+  - id: 0x140
+    name: ABS_BRAKE_PRESSURE
+    sender: ABS
+    dlc: 8
+    rate_hz: 50
+    description: >
+      Front/rear master-cylinder line pressure; split from ABS_STATUS to stay
+      within the 8-signal no_std codec capacity (dbc-rs
+      DBC_MAX_SIGNALS_PER_MESSAGE).
+    signals:
+      - name: FrontBrakePressure
+        start: 0
+        length: 12
+        factor: 0.05
+        offset: 0
+        unit: bar
+        vss: null
+      - name: RearBrakePressure
+        start: 16
+        length: 12
+        factor: 0.05
+        offset: 0
+        unit: bar
+        vss: null
+
+  - id: 0x200
+    name: CHASSIS_ELECTRICAL
+    sender: M7
+    dlc: 8
+    rate_hz: 10
+    description: >
+      Gateway aggregate retained for m7-draft consumers. AbsActiveMirror /
+      TcActiveMirror duplicate ABS_STATUS and will be dropped once all
+      consumers read the source messages.
+    signals:
+      - name: FuelLevel
+        start: 0
+        length: 8
+        factor: 0.5
+        offset: 0
+        unit: percent
+        vss: Vehicle.FuelSystem.Level
+      - name: BatteryVoltage
+        start: 8
+        length: 12
+        factor: 0.01
+        offset: 0
+        unit: V
+        vss: Vehicle.ElectricalSystem.Battery.Voltage
+      - name: CanBusLoad
+        start: 20
+        length: 7
+        unit: percent
+        vss: Vehicle.Cabin.Infotainment.CanBusLoad
+      - name: AbsActiveMirror
+        start: 27
+        length: 1
+        vss: Vehicle.ADAS.ABS.IsActive
+      - name: TcActiveMirror
+        start: 28
+        length: 1
+        vss: Vehicle.ADAS.TCS.IsActive
+      - name: DtcCount
+        start: 32
+        length: 8
+        vss: Vehicle.OBD.DTCCount
+
+  - id: 0x220
+    name: TRIP_ODOMETER
+    sender: CLUSTER
+    dlc: 8
+    rate_hz: 1
+    description: Odometer and trip meters (cluster-owned bookkeeping).
+    signals:
+      - name: Odometer
+        start: 0
+        length: 24
+        factor: 0.1
+        offset: 0
+        unit: km
+        vss: Vehicle.TraveledDistance
+      - name: Trip1
+        start: 24
+        length: 20
+        factor: 0.1
+        offset: 0
+        unit: km
+        vss: Vehicle.TripMeter1
+      - name: Trip2
+        start: 44
+        length: 20
+        factor: 0.1
+        offset: 0
+        unit: km
+        vss: Vehicle.TripMeter2
+
+  - id: 0x230
+    name: CLUSTER_NAV
+    sender: CLUSTER
+    dlc: 8
+    rate_hz: 5
+    description: GNSS-derived heading and elevation from the cluster nav stack.
+    signals:
+      - name: Heading
+        start: 0
+        length: 12
+        factor: 0.1
+        offset: 0
+        unit: deg
+        vss: Vehicle.CurrentLocation.Heading
+      - name: Elevation
+        start: 12
+        length: 14
+        factor: 1
+        offset: -1000
+        unit: m
+        vss: Vehicle.CurrentLocation.Altitude
+      - name: GpsFix
+        start: 26
+        length: 1
+        vss: null
