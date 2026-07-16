@@ -4,9 +4,9 @@ version = 4
 
 [[package]]
 name = "dbc-rs"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84b641a4e20fb86f061f12ec5845e35df2e1a16fcc4437f66decf2388ec8a853"
+checksum = "b3d0c4dfd96f9613f8f0faba5c93f56e376e8b64e56d8a4d40cf19f696500a72"
 dependencies = [
  "sigma-bounded",
 ]
