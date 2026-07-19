@@ -28,6 +28,7 @@
 
 #![forbid(unsafe_code)]
 
+mod binding;
 mod map;
 mod mapped_signal;
 mod path;
@@ -43,6 +44,7 @@ mod dbc;
 #[cfg(feature = "yaml")]
 mod frame_map;
 
+pub use binding::VssBinding;
 pub use map::VssMap;
 pub use mapped_signal::MappedSignal;
 pub use path::{InvalidVssPath, VssPath};
