@@ -29,6 +29,7 @@
 #![forbid(unsafe_code)]
 
 mod binding;
+mod datapoint;
 mod map;
 mod mapped_signal;
 mod path;
@@ -45,6 +46,7 @@ mod dbc;
 mod frame_map;
 
 pub use binding::VssBinding;
+pub use datapoint::{Availability, VssDatapoint};
 pub use map::VssMap;
 pub use mapped_signal::MappedSignal;
 pub use path::{InvalidVssPath, VssPath};

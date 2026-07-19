@@ -62,6 +62,14 @@ Vehicle.Powertrain.CombustionEngine.IsRunning:
   type: sensor
   description: True when the engine is running (ECU EngineRunning flag).
 
+Vehicle.Powertrain.CombustionEngine.ThrottlePosition:
+  datatype: float
+  type: sensor
+  unit: percent
+  min: 0
+  max: 100
+  description: Throttle plate position reported on the telemetry snapshot.
+
 Vehicle.Powertrain.Transmission:
   type: branch
 
@@ -313,6 +321,13 @@ Vehicle.Service.EngineHours:
   type: sensor
   unit: h
   description: Total engine run hours.
+
+Vehicle.Service.SignalsLive:
+  datatype: boolean
+  type: sensor
+  description: >
+    App-extension liveness flag: true while the signal source (CAN frames or
+    sim) is actively updating. Superseded by per-signal availability.
 
 # --- Chassis / safety (events) -----------------------------------------------
 

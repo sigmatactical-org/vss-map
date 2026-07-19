@@ -35,7 +35,7 @@
 
 use std::collections::HashMap;
 
-use crate::{VssPath, VssPoint, VssValue};
+use crate::{VssDatapoint, VssPath, VssPoint, VssValue};
 
 type Getter<S> = Box<dyn Fn(&S) -> VssValue + Send + Sync>;
 type Setter<S> = Box<dyn Fn(&mut S, &VssValue) + Send + Sync>;
@@ -143,6 +143,15 @@ impl<S> VssBinding<S> {
                     value: (signal.get)(state),
                 }
             })
+            .collect()
+    }
+
+    /// Render the whole state as datapoints stamped with `timestamp` (epoch
+    /// millis) and marked available — the freshness-carrying snapshot form.
+    pub fn snapshot_at(&self, state: &S, timestamp: i64) -> Vec<VssDatapoint> {
+        self.snapshot(state)
+            .into_iter()
+            .map(|p| VssDatapoint::from(p).at(timestamp))
             .collect()
     }
 
