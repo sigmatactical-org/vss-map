@@ -36,6 +36,8 @@ mod reading;
 mod value;
 mod value_kind;
 
+#[cfg(feature = "yaml")]
+mod catalog;
 #[cfg(feature = "dbc")]
 mod dbc;
 #[cfg(feature = "yaml")]
@@ -49,6 +51,8 @@ pub use reading::SignalReading;
 pub use value::VssValue;
 pub use value_kind::ValueKind;
 
+#[cfg(feature = "yaml")]
+pub use catalog::{CatalogError, CatalogMismatch, NodeType, VssCatalog, VssLeaf};
 #[cfg(feature = "dbc")]
 pub use dbc::translate_frame;
 #[cfg(feature = "yaml")]

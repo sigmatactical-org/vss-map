@@ -49,6 +49,20 @@ impl VssMap {
         self.signals.get(message)?.get(signal)
     }
 
+    /// The mapping entry for `message.signal`, mutably.
+    pub(crate) fn lookup_mut(&mut self, message: &str, signal: &str) -> Option<&mut MappedSignal> {
+        self.signals.get_mut(message)?.get_mut(signal)
+    }
+
+    /// Every mapped signal as `(message, signal, mapping)`.
+    pub fn iter(&self) -> impl Iterator<Item = (&str, &str, &MappedSignal)> {
+        self.signals.iter().flat_map(|(message, signals)| {
+            signals
+                .iter()
+                .map(move |(signal, mapped)| (message.as_str(), signal.as_str(), mapped))
+        })
+    }
+
     /// Translate one reading into a VSS point; `None` when unmapped.
     pub fn translate(&self, message: &str, reading: &impl SignalReading) -> Option<VssPoint> {
         let mapped = self.lookup(message, reading.signal())?;

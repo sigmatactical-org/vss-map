@@ -1,0 +1,346 @@
+# Sigma Sigma Racer Wingman instrument cluster — VSS signal tree (first draft)
+#
+# Extends COVESA Vehicle Signal Specification paths where they fit; adds
+# motorcycle-specific branches under Vehicle.Chassis and Vehicle.Body.
+# Target: sigma-racer-vehicle normalizes CAN-FD (M7 safety core) → VSS paths → IPC.
+#
+# Spec reference: https://covesa.github.io/vehicle_signal_specification/
+
+Vehicle:
+  type: branch
+  description: Root branch for all vehicle signals exposed to Sigma Racer Wingman.
+
+# --- Glanceable / persistent cluster (Tier 1) --------------------------------
+
+Vehicle.Speed:
+  datatype: float
+  type: sensor
+  unit: km/h
+  min: 0
+  max: 400
+  description: Ground speed displayed on the cluster speed readout.
+
+Vehicle.TraveledDistance:
+  datatype: float
+  type: sensor
+  unit: km
+  description: Odometer reading.
+
+Vehicle.TripMeter1:
+  datatype: float
+  type: sensor
+  unit: km
+  description: Trip meter A since reset.
+
+Vehicle.TripMeter2:
+  datatype: float
+  type: sensor
+  unit: km
+  description: Trip meter B since reset.
+
+Vehicle.Powertrain:
+  type: branch
+
+Vehicle.Powertrain.CombustionEngine:
+  type: branch
+
+Vehicle.Powertrain.CombustionEngine.Speed:
+  datatype: float
+  type: sensor
+  unit: rpm
+  min: 0
+  max: 20000
+  description: Crankshaft speed for the RPM tachometer.
+
+Vehicle.Powertrain.CombustionEngine.IsRedline:
+  datatype: boolean
+  type: sensor
+  description: True when engine speed is at or above the configured redline.
+
+Vehicle.Powertrain.CombustionEngine.IsRunning:
+  datatype: boolean
+  type: sensor
+  description: True when the engine is running (ECU EngineRunning flag).
+
+Vehicle.Powertrain.Transmission:
+  type: branch
+
+Vehicle.Powertrain.Transmission.CurrentGear:
+  datatype: int8
+  type: sensor
+  min: -1
+  max: 6
+  description: "Current gear (0 = neutral, -1 = reverse if applicable)."
+
+Vehicle.Powertrain.Transmission.PerformanceMode:
+  datatype: string
+  type: sensor
+  allowed: ["RAIN", "STD", "SPORT", "TRACK"]
+  description: Active riding / drive mode label shown in the systems panel.
+
+Vehicle.FuelSystem:
+  type: branch
+
+Vehicle.FuelSystem.Level:
+  datatype: float
+  type: sensor
+  unit: percent
+  min: 0
+  max: 100
+  description: Fuel tank level percentage.
+
+Vehicle.FuelSystem.Range:
+  datatype: uint16
+  type: sensor
+  unit: km
+  description: Estimated remaining range.
+
+Vehicle.FuelSystem.InstantConsumption:
+  datatype: float
+  type: sensor
+  unit: l/100km
+  description: Instantaneous fuel consumption.
+
+Vehicle.FuelSystem.AverageConsumption:
+  datatype: float
+  type: sensor
+  unit: l/100km
+  description: Trip average fuel consumption.
+
+Vehicle.ElectricalSystem:
+  type: branch
+
+Vehicle.ElectricalSystem.Battery:
+  type: branch
+
+Vehicle.ElectricalSystem.Battery.Voltage:
+  datatype: float
+  type: sensor
+  unit: V
+  description: Main battery terminal voltage.
+
+Vehicle.OBD:
+  type: branch
+
+Vehicle.OBD.CoolantTemperature:
+  datatype: int16
+  type: sensor
+  unit: celsius
+  description: Engine coolant temperature.
+
+Vehicle.OBD.OilTemperature:
+  datatype: int16
+  type: sensor
+  unit: celsius
+  description: Engine oil temperature.
+
+Vehicle.OBD.MAP:
+  datatype: float
+  type: sensor
+  unit: kPa
+  description: Intake manifold absolute pressure.
+
+Vehicle.OBD.IntakeTemp:
+  datatype: int16
+  type: sensor
+  unit: celsius
+  description: Intake air temperature.
+
+Vehicle.OBD.DTCCount:
+  datatype: uint8
+  type: sensor
+  description: Number of active diagnostic trouble codes.
+
+Vehicle.OBD.IsABSEnabled:
+  datatype: boolean
+  type: sensor
+  description: ABS intervention or fault indicator active.
+
+Vehicle.OBD.IsTractionControlEnabled:
+  datatype: boolean
+  type: sensor
+  description: Traction control intervention or fault indicator active.
+
+Vehicle.Acceleration:
+  type: branch
+
+Vehicle.Acceleration.Lateral:
+  datatype: float
+  type: sensor
+  unit: deg
+  description: Lean angle (motorcycle); lateral inclination of the chassis.
+
+Vehicle.Acceleration.Longitudinal:
+  datatype: float
+  type: sensor
+  unit: g
+  description: Longitudinal acceleration (G-force readout).
+
+Vehicle.CurrentLocation:
+  type: branch
+
+Vehicle.CurrentLocation.Heading:
+  datatype: float
+  type: sensor
+  unit: deg
+  min: 0
+  max: 360
+  description: GNSS-derived heading.
+
+Vehicle.CurrentLocation.Altitude:
+  datatype: int32
+  type: sensor
+  unit: m
+  description: GNSS-derived elevation above sea level.
+
+Vehicle.Chassis:
+  type: branch
+
+Vehicle.Chassis.Axle:
+  type: branch
+
+Vehicle.Chassis.Axle.Row1:
+  type: branch
+
+Vehicle.Chassis.Axle.Row1.Wheel:
+  type: branch
+
+Vehicle.Chassis.Axle.Row1.Wheel.Speed:
+  datatype: float
+  type: sensor
+  unit: km/h
+  min: 0
+  max: 400
+  description: Front wheel speed from the ABS sensor ring.
+
+Vehicle.Chassis.Axle.Row1.Wheel.Left:
+  type: branch
+
+Vehicle.Chassis.Axle.Row1.Wheel.Left.Tire:
+  type: branch
+
+Vehicle.Chassis.Axle.Row1.Wheel.Left.Tire.Pressure:
+  datatype: uint16
+  type: sensor
+  unit: kPa
+  description: Front tyre pressure.
+
+Vehicle.Chassis.Axle.Row2:
+  type: branch
+
+Vehicle.Chassis.Axle.Row2.Wheel:
+  type: branch
+
+Vehicle.Chassis.Axle.Row2.Wheel.Speed:
+  datatype: float
+  type: sensor
+  unit: km/h
+  min: 0
+  max: 400
+  description: Rear wheel speed from the ABS sensor ring.
+
+Vehicle.Chassis.Axle.Row2.Wheel.Left:
+  type: branch
+
+Vehicle.Chassis.Axle.Row2.Wheel.Left.Tire:
+  type: branch
+
+Vehicle.Chassis.Axle.Row2.Wheel.Left.Tire.Pressure:
+  datatype: uint16
+  type: sensor
+  unit: kPa
+  description: Rear tyre pressure.
+
+Vehicle.Body:
+  type: branch
+
+Vehicle.Body.IsSideStandEngaged:
+  datatype: boolean
+  type: sensor
+  description: Side stand is down; cluster shows side-stand warning overlay.
+
+Vehicle.Cabin:
+  type: branch
+
+Vehicle.Cabin.Infotainment:
+  type: branch
+
+Vehicle.Cabin.Infotainment.CanBusLoad:
+  datatype: uint8
+  type: sensor
+  unit: percent
+  min: 0
+  max: 100
+  description: CAN-FD bus utilization for diagnostics panel.
+
+# --- Maintenance (Tier 2 — systems / maintenance windows) --------------------
+
+Vehicle.Service:
+  type: branch
+
+Vehicle.Service.DistanceToService:
+  datatype: int32
+  type: sensor
+  unit: km
+  description: Distance until next scheduled service.
+
+Vehicle.Service.OilLife:
+  datatype: float
+  type: sensor
+  unit: percent
+  description: Estimated remaining engine oil life.
+
+Vehicle.Service.ChainDistance:
+  datatype: uint32
+  type: sensor
+  unit: km
+  description: Distance since last chain service.
+
+Vehicle.Service.BrakePadWearFront:
+  datatype: float
+  type: sensor
+  unit: percent
+  description: Front brake pad wear estimate.
+
+Vehicle.Service.BrakePadWearRear:
+  datatype: float
+  type: sensor
+  unit: percent
+  description: Rear brake pad wear estimate.
+
+Vehicle.Service.EngineHours:
+  datatype: float
+  type: sensor
+  unit: h
+  description: Total engine run hours.
+
+# --- Chassis / safety (events) -----------------------------------------------
+
+Vehicle.ADAS:
+  type: branch
+
+Vehicle.ADAS.ABS:
+  type: branch
+
+Vehicle.ADAS.ABS.IsActive:
+  datatype: boolean
+  type: actuator
+  description: ABS currently modulating.
+
+Vehicle.ADAS.ABS.IsError:
+  datatype: boolean
+  type: sensor
+  description: ABS fault detected (AbsFault flag).
+
+Vehicle.ADAS.TCS:
+  type: branch
+
+Vehicle.ADAS.TCS.IsActive:
+  datatype: boolean
+  type: actuator
+  description: Traction control currently modulating.
+
+Vehicle.ADAS.TCS.IsEnabled:
+  datatype: boolean
+  type: actuator
+  description: Rider-selected TC enable state.
