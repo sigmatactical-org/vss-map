@@ -11,9 +11,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@1.97.0
+      - uses: dtolnay/rust-toolchain@1.97.1
         with:
           components: clippy
 
@@ -37,8 +37,8 @@ jobs:
   fmt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: dtolnay/rust-toolchain@1.97.0
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@1.97.1
         with:
           components: rustfmt
       - run: cargo fmt --all -- --check
