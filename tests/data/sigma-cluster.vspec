@@ -322,12 +322,9 @@ Vehicle.Service.EngineHours:
   unit: h
   description: Total engine run hours.
 
-Vehicle.Service.SignalsLive:
-  datatype: boolean
-  type: sensor
-  description: >
-    App-extension liveness flag: true while the signal source (CAN frames or
-    sim) is actively updating. Superseded by per-signal availability.
+# Vehicle.Service.SignalsLive was retired: per-signal freshness now travels in
+# the telemetry message `avail` map (see sigma-racer-telemetry availability),
+# not as a single global VSS boolean.
 
 # --- Chassis / safety (events) -----------------------------------------------
 
