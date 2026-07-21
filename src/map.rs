@@ -4,6 +4,21 @@ use std::collections::HashMap;
 
 use crate::{MappedSignal, SignalReading, ValueKind, VssPath, VssPoint};
 
+/// How often a frame is transmitted, and which VSS paths it carries — the
+/// inputs a producer needs to judge per-signal freshness. `rate_hz == 0` marks
+/// an event-driven frame (no periodic budget).
+#[derive(Debug, Clone, PartialEq)]
+pub struct FrameTiming {
+    /// CAN frame id.
+    pub id: u32,
+    /// Message name.
+    pub message: String,
+    /// Nominal transmit rate in hertz; `0.0` for event-driven frames.
+    pub rate_hz: f64,
+    /// The mapped VSS paths this frame feeds.
+    pub paths: Vec<VssPath>,
+}
+
 /// The mapping table: which (message, signal) pairs land where in the VSS
 /// tree, plus the frame-id → message-name index for id-keyed decoders.
 #[derive(Debug, Clone, Default)]
@@ -12,6 +27,8 @@ pub struct VssMap {
     // borrowed strs instead of allocating a composite key.
     signals: HashMap<String, HashMap<String, MappedSignal>>,
     messages_by_id: HashMap<u32, String>,
+    // frame id → nominal transmit rate (hz); 0.0 == event-driven.
+    frame_rate_hz: HashMap<u32, f64>,
 }
 
 impl VssMap {
@@ -42,6 +59,42 @@ impl VssMap {
     /// Message name for a frame id, when known.
     pub fn message_for_id(&self, id: u32) -> Option<&str> {
         self.messages_by_id.get(&id).map(String::as_str)
+    }
+
+    /// Record a frame's nominal transmit rate (hz); `0.0` for event-driven.
+    pub fn set_frame_rate_hz(&mut self, id: u32, rate_hz: f64) {
+        self.frame_rate_hz.insert(id, rate_hz);
+    }
+
+    /// A frame's nominal transmit rate (hz), when known.
+    pub fn frame_rate_hz(&self, id: u32) -> Option<f64> {
+        self.frame_rate_hz.get(&id).copied()
+    }
+
+    /// Per-frame timing and the VSS paths each frame feeds — the inputs a
+    /// producer uses to track per-signal freshness. Only frames with at least
+    /// one mapped path are returned; order is unspecified.
+    pub fn frame_timings(&self) -> Vec<FrameTiming> {
+        self.messages_by_id
+            .iter()
+            .filter_map(|(&id, message)| {
+                let paths: Vec<VssPath> = self
+                    .signals
+                    .get(message)?
+                    .values()
+                    .map(|m| m.path.clone())
+                    .collect();
+                if paths.is_empty() {
+                    return None;
+                }
+                Some(FrameTiming {
+                    id,
+                    message: message.clone(),
+                    rate_hz: self.frame_rate_hz.get(&id).copied().unwrap_or(0.0),
+                    paths,
+                })
+            })
+            .collect()
     }
 
     /// The mapping entry for `message.signal`, when one exists.

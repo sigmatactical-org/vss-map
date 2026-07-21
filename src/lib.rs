@@ -47,7 +47,7 @@ mod frame_map;
 
 pub use binding::VssBinding;
 pub use datapoint::{Availability, VssDatapoint};
-pub use map::VssMap;
+pub use map::{FrameTiming, VssMap};
 pub use mapped_signal::MappedSignal;
 pub use path::{InvalidVssPath, VssPath};
 pub use point::VssPoint;

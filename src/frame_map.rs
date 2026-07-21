@@ -39,6 +39,8 @@ struct FrameDef {
     id: u32,
     name: String,
     #[serde(default)]
+    rate_hz: Option<f64>,
+    #[serde(default)]
     signals: Vec<SignalDef>,
 }
 
@@ -80,6 +82,9 @@ impl VssMap {
         let doc: FrameMapDoc = serde_yaml_ng::from_str(yaml).map_err(FrameMapError::Yaml)?;
         for frame in doc.frames {
             self.set_message_id(frame.id, frame.name.clone());
+            if let Some(rate_hz) = frame.rate_hz {
+                self.set_frame_rate_hz(frame.id, rate_hz);
+            }
             for signal in frame.signals {
                 let Some(vss) = signal.vss.as_deref() else {
                     continue;

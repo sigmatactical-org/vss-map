@@ -48,3 +48,31 @@ fn maps_paths_and_infers_kinds() {
     assert!(map.lookup("THROTTLE_GEAR", "ThrottlePos").is_none());
     assert!(map.lookup("CLUSTER_NAV", "GpsFix").is_none());
 }
+
+#[test]
+fn exposes_frame_rates_and_timings() {
+    let map = map();
+
+    // Rates come straight from the frame map.
+    assert_eq!(map.frame_rate_hz(0x0A0), Some(50.0)); // ENGINE_STATUS
+    assert_eq!(map.frame_rate_hz(0x220), Some(1.0)); // TRIP_ODOMETER
+    assert_eq!(map.frame_rate_hz(0x0E0), Some(0.0)); // RIDE_MODE_REQUEST (event)
+    assert_eq!(map.frame_rate_hz(0x999), None);
+
+    let timings = map.frame_timings();
+    // Only frames with at least one mapped path appear.
+    let engine = timings
+        .iter()
+        .find(|t| t.id == 0x0A0)
+        .expect("ENGINE_STATUS has mapped paths");
+    assert_eq!(engine.rate_hz, 50.0);
+    assert!(
+        engine
+            .paths
+            .iter()
+            .any(|p| p.as_str() == "Vehicle.Powertrain.CombustionEngine.Speed")
+    );
+
+    // RIDE_MODE_REQUEST maps nothing (all vss: null) → absent from timings.
+    assert!(timings.iter().all(|t| t.id != 0x0E0));
+}
